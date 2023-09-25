@@ -1,0 +1,45 @@
+version: '1.0.0'
+
+services:
+
+  # Servicio de la base de datos MySQL
+  mysql-db:
+    image: mysql:8.0  # Cambia la imagen a la versión específica que desees
+    restart: unless-stopped
+    container_name: mysql-db
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=my-secret-password  # Contraseña de root
+      - MYSQL_DATABASE=users_db  # Nombre de la base de datos
+    ports:
+      - "3307:3306"  # Mapeo del puerto (puerto del contenedor:puerto del host)
+    networks:
+      - app-network
+    command: ["--init-file", "/docker-entrypoint-initdb.d/init.sql","--bind-address=0.0.0.0"]
+
+
+  # Servicio de la API de Node.js
+  nodejs-app:
+    image: node:18
+    restart: unless-stopped
+    container_name: nodejs-app
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    ports:
+      - "5000:5000"
+    command: sh -c "npm install && npm start"
+    networks:
+      - app-network
+    depends_on:
+      - mysql-db
+
+  
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:
